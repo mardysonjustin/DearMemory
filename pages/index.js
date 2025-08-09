@@ -11,21 +11,30 @@ export default function Home() {
   const [stream, setStream] = useState(null);
 
   const initCamera = useCallback(async () => {
-    try {
-      console.log("Requesting camera access...");
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+    async function tryCamera(width, height) {
+      return navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: width },
+          height: { ideal: height }
         }
       });
+    }
+
+    try {
+      console.log("Requesting camera access...");
+      let mediaStream;
+      try {
+        mediaStream = await tryCamera(1280, 720);
+      } catch (err) {
+        console.warn("1280x720 failed, retrying 640x480...");
+        mediaStream = await tryCamera(640, 480);
+      }
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
-        
-        // wait for video to load
+
         videoRef.current.onloadedmetadata = () => {
           console.log("Video metadata loaded");
           setCameraReady(true);
@@ -45,24 +54,18 @@ export default function Home() {
       setError("Camera not ready");
       return;
     }
-
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
 
-      // set canvas size to match video
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
-
-      // draw current video frame to canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // convert canvas to image data URL
       const imageDataUrl = canvas.toDataURL("image/png");
       setCapturedImage(imageDataUrl);
       setError(null);
-
       console.log("Photo captured successfully");
     } catch (err) {
       console.error("Capture error:", err);
@@ -75,7 +78,6 @@ export default function Home() {
       setError("Please wait for camera to load");
       return;
     }
-
     let counter = 3;
     setCountdown(counter);
     setError(null);
@@ -96,11 +98,8 @@ export default function Home() {
     }, 1000);
   }, [cameraReady, capture]);
 
-
   useEffect(() => {
     initCamera();
-
-    // to stop the camera stream
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -117,20 +116,29 @@ export default function Home() {
     }
   };
 
-  const retakePhoto = () => {
+  const retakePhoto = async () => {
     setCapturedImage(null);
     setError(null);
-    if (!cameraReady && !stream) {
-      initCamera(); 
+
+    // stop old camera stream if exists
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
     }
+
+    await initCamera();
   };
 
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-4 relative overflow-hidden">
+    <div
+      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-4 relative overflow-hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }} // for iphone notch
+    >
       <div className="absolute inset-0 bg-black opacity-20"></div>
       <div className="absolute top-10 left-10 w-32 h-32 bg-pink-500 rounded-full opacity-10 animate-pulse"></div>
       <div className="absolute bottom-20 right-20 w-24 h-24 bg-blue-400 rounded-full opacity-10 animate-pulse delay-1000"></div>
-      
+
       <div className="relative z-10 flex flex-col items-center">
         <h1 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
           📸 Photobooth
@@ -144,20 +152,16 @@ export default function Home() {
 
         {!capturedImage ? (
           <div className="relative">
-            {/* video/capture element */}
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
               className="rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm max-w-md"
-              style={{ transform: 'scaleX(-1)' }} // Mirror effect
+              style={{ transform: "scaleX(-1)" }}
             />
-            
-            {/* hidden canvas for capture */}
             <canvas ref={canvasRef} className="hidden" />
 
-            {/* countdown overlay */}
             {countdown && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="bg-black/50 rounded-full w-32 h-32 flex items-center justify-center">
@@ -168,12 +172,10 @@ export default function Home() {
               </div>
             )}
 
-            {/* flash overlay */}
             {flash && (
               <div className="absolute inset-0 bg-white rounded-2xl animate-pulse"></div>
             )}
 
-            {/* camera not ready overlay */}
             {!cameraReady && !error && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-2xl">
                 <div className="text-center">
@@ -189,12 +191,11 @@ export default function Home() {
               src={capturedImage}
               alt="Captured"
               className="rounded-2xl shadow-2xl border-4 border-white/20 max-w-md"
-              style={{ transform: 'scaleX(-1)' }}
+              style={{ transform: "scaleX(-1)" }}
             />
           </div>
         )}
 
-        {/* Controls */}
         <div className="mt-8 flex flex-wrap gap-4 justify-center">
           {!capturedImage ? (
             <button
@@ -210,23 +211,26 @@ export default function Home() {
                 onClick={downloadImage}
                 className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
               >
-                ⬇️ Download
+                Download
               </button>
               <button
                 onClick={retakePhoto}
                 className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
               >
-                🔄 Retake
+                Retake
               </button>
             </>
           )}
         </div>
 
-        {/* status indicator */}
         <div className="mt-4 flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${cameraReady ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+          <div
+            className={`w-3 h-3 rounded-full ${
+              cameraReady ? "bg-green-400 animate-pulse" : "bg-red-400"
+            }`}
+          ></div>
           <span className="text-sm opacity-75">
-            {cameraReady ? 'Camera Ready' : 'Camera Loading...'}
+            {cameraReady ? "Camera Ready" : "Camera Loading..."}
           </span>
         </div>
       </div>
