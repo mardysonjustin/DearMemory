@@ -4,6 +4,7 @@ export default function Home() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [capturedImage, setCapturedImage] = useState(null);
+  const [gallery, setGallery] = useState([]); // store multiple shots
   const [countdown, setCountdown] = useState(null);
   const [flash, setFlash] = useState(false);
   const [error, setError] = useState(null);
@@ -54,6 +55,7 @@ export default function Home() {
       setError("Camera not ready");
       return;
     }
+
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -64,7 +66,10 @@ export default function Home() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageDataUrl = canvas.toDataURL("image/png");
-      setCapturedImage(imageDataUrl);
+
+      // Add to gallery instead of replacing single image
+      setGallery((prev) => [...prev, imageDataUrl]);
+      setCapturedImage(imageDataUrl); // keep current image highlighted
       setError(null);
       console.log("Photo captured successfully");
     } catch (err) {
@@ -102,18 +107,16 @@ export default function Home() {
     initCamera();
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [initCamera]);
 
-  const downloadImage = () => {
-    if (capturedImage) {
-      const link = document.createElement("a");
-      link.href = capturedImage;
-      link.download = `photobooth-${Date.now()}.png`;
-      link.click();
-    }
+  const downloadImage = (img) => {
+    const link = document.createElement("a");
+    link.href = img || capturedImage;
+    link.download = `photobooth-${Date.now()}.png`;
+    link.click();
   };
 
   const retakePhoto = async () => {
@@ -122,13 +125,19 @@ export default function Home() {
 
     // stop old camera stream if exists
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
 
     await initCamera();
   };
 
+  const deleteFromGallery = (index) => {
+    setGallery((prev) => prev.filter((_, i) => i !== index));
+    if (gallery[index] === capturedImage) {
+      setCapturedImage(null);
+    }
+  };
 
   return (
     <div
@@ -208,7 +217,7 @@ export default function Home() {
           ) : (
             <>
               <button
-                onClick={downloadImage}
+                onClick={() => downloadImage(capturedImage)}
                 className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
               >
                 Download
@@ -222,6 +231,32 @@ export default function Home() {
             </>
           )}
         </div>
+
+        {/* Gallery */}
+        {gallery.length > 0 && (
+          <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg">
+            {gallery.map((img, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={img}
+                  alt={`Shot ${index + 1}`}
+                  className={`rounded-lg border-2 ${
+                    capturedImage === img
+                      ? "border-green-400"
+                      : "border-transparent"
+                  } cursor-pointer`}
+                  onClick={() => setCapturedImage(img)}
+                />
+                <button
+                  onClick={() => deleteFromGallery(index)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 flex items-center space-x-2">
           <div
