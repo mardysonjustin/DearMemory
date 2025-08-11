@@ -1,22 +1,28 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function usePhotobooth() {
+export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const [photos, setPhotos] = useState([]);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [flash, setFlash] = useState(false);
+  const [takingPhotos, setTakingPhotos] = useState(false);
 
   useEffect(() => {
+    // Lazily create canvas on the client
+    if (!canvasRef.current && typeof document !== "undefined") {
+      canvasRef.current = document.createElement("canvas");
+    }
+
     async function initCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            setIsCameraReady(true);
-          };
+          await videoRef.current.play();
         }
+        setIsCameraReady(true);
       } catch (err) {
         console.error("Camera error:", err);
       }
@@ -24,75 +30,61 @@ export default function usePhotobooth() {
     initCamera();
   }, []);
 
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext("2d");
+  const takePhoto = () => {
+    if (!canvasRef.current && typeof document !== "undefined") {
+      canvasRef.current = document.createElement("canvas");
+    }
+    const ctx = canvasRef.current.getContext("2d");
+    canvasRef.current.width = videoRef.current.videoWidth;
+    canvasRef.current.height = videoRef.current.videoHeight;
     ctx.drawImage(videoRef.current, 0, 0);
-    setPhotos((prev) => [...prev, canvas.toDataURL("image/png")].slice(0, 4));
+    const photoData = canvasRef.current.toDataURL("image/png");
+    setPhotos((prev) => {
+      const updated = [...prev, photoData];
+      if (updated.length === maxPhotos) {
+        setTakingPhotos(false);
+        if (onFinish) onFinish(updated);
+      }
+      return updated;
+    });
+    triggerFlash();
+  };
+
+  const triggerFlash = () => {
+    setFlash(true);
+    setTimeout(() => setFlash(false), 200);
   };
 
   const startPhotobooth = async () => {
-    for (let i = 0; i < 4; i++) {
-      // countdown
-      for (let sec = 5; sec > 0; sec--) {
-        setCountdown(sec);
-        await new Promise((res) => setTimeout(res, 1000));
-      }
-      setCountdown(null);
+    if (takingPhotos) return;
+    setPhotos([]);
+    setTakingPhotos(true);
 
-      // flash effect
-      setFlash(true);
-      capturePhoto();
-      await new Promise((res) => setTimeout(res, 150));
-      setFlash(false);
-
-      if (i < 3) await new Promise((res) => setTimeout(res, 1000));
+    for (let i = 0; i < maxPhotos; i++) {
+      await runCountdown(3);
+      takePhoto();
     }
   };
 
-  const clearPhotos = () => setPhotos([]);
-
-  const downloadStrip = () => {
-    if (photos.length < 4) {
-      alert("Take 4 photos first!");
-      return;
-    }
-
-    const stripCanvas = document.createElement("canvas");
-    const width = 600;
-    const photoHeight = 400;
-    const padding = 20;
-    const totalHeight = photoHeight * 4 + padding * 5;
-
-    stripCanvas.width = width;
-    stripCanvas.height = totalHeight;
-    const ctx = stripCanvas.getContext("2d");
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, totalHeight);
-
-    photos.forEach((photo, index) => {
-      const img = new Image();
-      img.src = photo;
-      img.onload = () => {
-        ctx.drawImage(
-          img,
-          padding,
-          padding + index * (photoHeight + padding),
-          width - padding * 2,
-          photoHeight
-        );
-        if (index === photos.length - 1) {
-          const link = document.createElement("a");
-          link.download = "photobooth_strip.png";
-          link.href = stripCanvas.toDataURL("image/png");
-          link.click();
+  const runCountdown = (seconds) => {
+    return new Promise((resolve) => {
+      let timeLeft = seconds;
+      setCountdown(timeLeft);
+      const timer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          setCountdown(null);
+          resolve();
+        } else {
+          setCountdown(timeLeft);
         }
-      };
+      }, 1000);
     });
+  };
+
+  const clearPhotos = () => {
+    setPhotos([]);
   };
 
   return {
@@ -100,7 +92,6 @@ export default function usePhotobooth() {
     photos,
     isCameraReady,
     startPhotobooth,
-    downloadStrip,
     countdown,
     flash,
     clearPhotos,
