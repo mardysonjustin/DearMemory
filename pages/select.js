@@ -66,18 +66,21 @@ export default function SelectPhotos() {
         }
         .photo-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(140px, 140px));
           gap: 15px;
-          margin: 20px 0;
+          margin: 20px auto;
+          justify-content: center;
+          width: 100%;
+          max-width: 1000px;
         }
         .photo-item {
           position: relative;
+          width: 140px;
           border-radius: 8px;
           overflow: hidden;
           border: 3px solid transparent;
           transition: transform 0.2s, border-color 0.2s;
           cursor: pointer;
-          justify-content: center;
         }
         .photo-item:hover {
           transform: scale(1.03);
