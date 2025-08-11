@@ -1,29 +1,28 @@
-export default function Controls({ takePhoto, downloadStrip, disabled }) {
+export default function Controls({ startPhotobooth, downloadStrip, disabled, photos, clearPhotos }) {
+  const handleClick = () => {
+    if (photos.length >= 4) {
+      clearPhotos();
+      return;
+    }
+    startPhotobooth();
+  };
+
   return (
-    <div className="controls">
-      <button onClick={takePhoto} disabled={disabled}>
-        📸 Take Photo
+    <div className="flex flex-col items-center gap-4 mt-6">
+      <button
+        onClick={handleClick}
+        disabled={disabled}
+        className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg shadow-md transition-colors"
+      >
+        {photos.length >= 4 ? "Restart" : "Start"}
       </button>
-      <button onClick={downloadStrip}>💾 Download Strip</button>
-      <style jsx>{`
-        .controls {
-          display: flex;
-          gap: 10px;
-          justify-content: center;
-          margin-bottom: 1rem;
-        }
-        button {
-          padding: 10px 20px;
-          font-size: 1rem;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-        button:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-      `}</style>
+      <button
+        onClick={downloadStrip}
+        disabled={photos.length === 0}
+        className="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-lg shadow-md transition-colors"
+      >
+        Download Strip
+      </button>
     </div>
   );
 }

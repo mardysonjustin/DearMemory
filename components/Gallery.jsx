@@ -1,23 +1,14 @@
 export default function Gallery({ photos }) {
   return (
-    <div className="gallery">
-      {photos.map((src, idx) => (
-        <img key={idx} src={src} alt={`Photo ${idx + 1}`} />
+    <div className="bg-white p-4 rounded-lg shadow-md min-h-[500px] flex flex-col justify-start items-center gap-4">
+      {photos.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt={`Photo ${i + 1}`}
+          className="w-40 object-cover border border-gray-300 rounded"
+        />
       ))}
-      <style jsx>{`
-        .gallery {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-        img {
-          width: 150px;
-          border: 3px solid white;
-          border-radius: 5px;
-          background: #ddd;
-        }
-      `}</style>
     </div>
   );
 }
