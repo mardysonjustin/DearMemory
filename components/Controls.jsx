@@ -1,36 +1,29 @@
-export default function Controls({
-  capturedImage,
-  cameraReady,
-  startCountdown,
-  downloadImage,
-  retakePhoto,
-}) {
+export default function Controls({ takePhoto, downloadStrip, disabled }) {
   return (
-    <div className="mt-8 flex flex-wrap gap-4 justify-center">
-      {!capturedImage ? (
-        <button
-          onClick={startCountdown}
-          disabled={!cameraReady}
-          className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-        >
-          Take Photo
-        </button>
-      ) : (
-        <>
-          <button
-            onClick={() => downloadImage(capturedImage)}
-            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-          >
-            Download
-          </button>
-          <button
-            onClick={retakePhoto}
-            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-          >
-            Retake
-          </button>
-        </>
-      )}
+    <div className="controls">
+      <button onClick={takePhoto} disabled={disabled}>
+        📸 Take Photo
+      </button>
+      <button onClick={downloadStrip}>💾 Download Strip</button>
+      <style jsx>{`
+        .controls {
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          margin-bottom: 1rem;
+        }
+        button {
+          padding: 10px 20px;
+          font-size: 1rem;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+        button:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+      `}</style>
     </div>
   );
 }
