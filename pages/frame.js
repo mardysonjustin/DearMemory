@@ -24,6 +24,7 @@ export default function FramePage() {
                   name: item.name,
                   backgroundColor: item.backgroundColor,
                   overlayPosition: item.overlayPosition,
+                  dateColor: item.dateColor,
                 }
           );
           setAvailableFrames(normalized.filter((f) => f && f.name));
@@ -47,9 +48,12 @@ export default function FramePage() {
     canvas.width = width;
     canvas.height = height;
 
+    // Resolve selected frame config
     const selectedFrame = availableFrames.find((f) => f.name === frameName) || null;
     const backgroundColor = selectedFrame?.backgroundColor || "#ffffff";
     const overlayPosition = selectedFrame?.overlayPosition || "above"; // 'above' | 'below'
+    const dateColorRaw = (selectedFrame?.dateColor || "black").toLowerCase();
+    const dateColor = dateColorRaw === "white" ? "white" : "black"; // clamp to black/white only
 
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = backgroundColor;
@@ -87,6 +91,7 @@ export default function FramePage() {
       return [];
     });
 
+    // Slight vertical shrink inside each slot (e.g., 5%)
     const verticalShrink = 0.95;
 
     const drawPhotos = (images) => {
@@ -131,6 +136,31 @@ export default function FramePage() {
     if (overlayPosition === "above" && overlayImg) {
       ctx.drawImage(overlayImg, 0, 0, width, height);
     }
+
+    // added date
+    const drawDate = () => {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = now.getFullYear();
+      const dateText = `${dd}-${mm}-${yyyy}`;
+
+      const margin = 36;
+      ctx.save();
+      ctx.font = "600 35px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = dateColor;
+
+      ctx.shadowColor = dateColor === "white" ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+
+      ctx.fillText(dateText, width - margin, height - margin);
+      ctx.restore();
+    };
+
+    drawDate();
   };
 
   const downloadImage = () => {

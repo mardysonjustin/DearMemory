@@ -1,3 +1,8 @@
 [
-  { "name": "frame1", "backgroundColor": "#faf5e6", "overlayPosition": "below" } 
-] 
+  {
+    "name": "frame1",
+    "backgroundColor": "#faf5e6",
+    "overlayPosition": "below",
+    "dateColor": "black"
+  }
+]

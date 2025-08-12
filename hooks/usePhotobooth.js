@@ -10,7 +10,6 @@ export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
   const [takingPhotos, setTakingPhotos] = useState(false);
 
   useEffect(() => {
-    // Lazily create canvas on the client
     if (!canvasRef.current && typeof document !== "undefined") {
       canvasRef.current = document.createElement("canvas");
     }
