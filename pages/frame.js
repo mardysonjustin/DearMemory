@@ -47,7 +47,6 @@ export default function FramePage() {
     canvas.width = width;
     canvas.height = height;
 
-    // Resolve selected frame config
     const selectedFrame = availableFrames.find((f) => f.name === frameName) || null;
     const backgroundColor = selectedFrame?.backgroundColor || "#ffffff";
     const overlayPosition = selectedFrame?.overlayPosition || "above"; // 'above' | 'below'
