@@ -31,7 +31,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1 style={{ textAlign: "center" }}>Oblivion</h1>
+      <h1 style={{ textAlign: "center" }}>Dear Memory</h1>
       <StatusIndicator isReady={isCameraReady} />
 
       <div className="main-layout">

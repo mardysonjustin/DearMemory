@@ -2,33 +2,43 @@ import { useEffect, useRef, useState } from "react";
 
 export default function FramePage() {
   const [photos, setPhotos] = useState([]);
-  const [frame, setFrame] = useState("polaroid");
+  const [frameName, setFrameName] = useState("");
+  const [availableFrames, setAvailableFrames] = useState([]);
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const selected = JSON.parse(localStorage.getItem("selectedPhotos")) || [];
-    setPhotos(selected);
+    setPhotos(selected.slice(0, 4));
+  }, []);
+
+  useEffect(() => {
+    // load available frame names from manifest
+    fetch("/frames/manifest.json")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((list) => {
+        if (Array.isArray(list)) {
+          const normalized = list.map((item) =>
+            typeof item === "string"
+              ? { name: item }
+              : {
+                  name: item.name,
+                  backgroundColor: item.backgroundColor,
+                  overlayPosition: item.overlayPosition,
+                }
+          );
+          setAvailableFrames(normalized.filter((f) => f && f.name));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (photos.length === 4) {
       drawFrame();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, frame]);
+  }, [photos, frameName]);
 
-  function drawRoundedRect(ctx, x, y, width, height, radius) {
-    const r = Math.min(radius, width / 2, height / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + width, y, x + width, y + height, r);
-    ctx.arcTo(x + width, y + height, x, y + height, r);
-    ctx.arcTo(x, y + height, x, y, r);
-    ctx.arcTo(x, y, x + width, y, r);
-    ctx.closePath();
-  }
-
-  const drawFrame = () => {
+  const drawFrame = async () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
@@ -37,194 +47,171 @@ export default function FramePage() {
     canvas.width = width;
     canvas.height = height;
 
-    const outerMargin = 40;
-    const innerMargin = 40;
-    const footerHeight = 220; 
-    const borderRadius = 40;
-    const photoGap = 30;
-
-    const contentTop = outerMargin + innerMargin;
-    const contentBottom = height - outerMargin - innerMargin - footerHeight;
-    const availableHeight = contentBottom - contentTop;
-    const photoWidth = width - outerMargin * 2 - innerMargin * 2;
-    const photoHeight = (availableHeight - photoGap * 3) / 4;
+    // Resolve selected frame config
+    const selectedFrame = availableFrames.find((f) => f.name === frameName) || null;
+    const backgroundColor = selectedFrame?.backgroundColor || "#ffffff";
+    const overlayPosition = selectedFrame?.overlayPosition || "above"; // 'above' | 'below'
 
     ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, width, height);
 
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 20;
+    const slots = [
+      { x: 80, y: 80, w: 840, h: 632 },
+      { x: 80, y: 743, w: 840, h: 632 },
+      { x: 80, y: 1405, w: 840, h: 632 },
+      { x: 80, y: 2068, w: 840, h: 632 },
+    ];
 
-    drawRoundedRect(ctx, outerMargin, outerMargin, width - outerMargin * 2, height - outerMargin * 2, borderRadius);
-
-    if (frame === "polaroid") {
-      ctx.fillStyle = "#ffffff";
-    } else if (frame === "wood") {
-      const grad = ctx.createLinearGradient(0, 0, width, height);
-      grad.addColorStop(0, "#6e3b1f");
-      grad.addColorStop(0.5, "#8b5a2b");
-      grad.addColorStop(1, "#c19a6b");
-      ctx.fillStyle = grad;
-    } else if (frame === "gold") {
-      const grad = ctx.createRadialGradient(width / 2, height / 2, 200, width / 2, height / 2, height / 1.2);
-      grad.addColorStop(0, "#fff3b0");
-      grad.addColorStop(0.4, "#ffd700");
-      grad.addColorStop(1, "#b8860b");
-      ctx.fillStyle = grad;
-    } else {
-      ctx.fillStyle = "#ffffff";
-    }
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = "rgba(0,0,0,0.15)";
-    ctx.lineWidth = 18;
-    drawRoundedRect(ctx, outerMargin + 9, outerMargin + 9, width - (outerMargin + 9) * 2, height - (outerMargin + 9) * 2, borderRadius - 6);
-    ctx.stroke();
-
-    const gloss = ctx.createLinearGradient(0, outerMargin, 0, height * 0.4);
-    gloss.addColorStop(0, "rgba(255,255,255,0.22)");
-    gloss.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = gloss;
-    drawRoundedRect(ctx, outerMargin + 6, outerMargin + 6, width - (outerMargin + 6) * 2, height * 0.35, borderRadius - 10);
-    ctx.fill();
-
-    for (let i = 0; i < 4; i++) {
-      const x = outerMargin + innerMargin;
-      const y = contentTop + i * (photoHeight + photoGap);
-
-      ctx.save();
-      drawRoundedRect(ctx, x, y, photoWidth, photoHeight, 24);
-      ctx.fillStyle = "#f2f2f2";
-      ctx.fill();
-      ctx.clip();
-
-      const src = photos[i];
-      if (src) {
+    const loadImage = (src) =>
+      new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
         img.src = src;
-        img.onload = () => {
-          const imageAspect = img.width / img.height;
-          const slotAspect = photoWidth / photoHeight;
-          let drawW, drawH, dx, dy;
-          if (imageAspect > slotAspect) {
-            // image is wider than slot
-            drawH = photoHeight;
-            drawW = drawH * imageAspect;
-            dx = x + (photoWidth - drawW) / 2;
-            dy = y;
-          } else {
-            // image is taller than slot
-            drawW = photoWidth;
-            drawH = drawW / imageAspect;
-            dx = x;
-            dy = y + (photoHeight - drawH) / 2;
-          }
-          ctx.save();
-          drawRoundedRect(ctx, x, y, photoWidth, photoHeight, 24);
-          ctx.clip();
-          ctx.drawImage(img, dx, dy, drawW, drawH);
-          ctx.restore();
-        };
-      }
-      ctx.restore();
+      });
 
-      ctx.strokeStyle = "rgba(0,0,0,0.08)";
-      ctx.lineWidth = 8;
-      drawRoundedRect(ctx, x, y, photoWidth, photoHeight, 24);
-      ctx.stroke();
+    const loadOverlay = () =>
+      new Promise((resolve) => {
+        if (!frameName || frameName.trim() === "") return resolve(null);
+        const overlay = new Image();
+        overlay.onload = () => resolve(overlay);
+        overlay.onerror = () => resolve(null);
+        overlay.src = `/frames/${frameName}.png`;
+      });
+
+    // begin loading overlay and photos in parallel
+    const overlayPromise = loadOverlay();
+    const imagesPromise = Promise.all(photos.map(loadImage)).catch((e) => {
+      console.error("Failed to load one or more photos", e);
+      return [];
+    });
+
+    const verticalShrink = 0.95;
+
+    const drawPhotos = (images) => {
+      images.forEach((img, i) => {
+        if (!img) return;
+        const { x, y, w, h } = slots[i];
+
+        const innerH = Math.round(h * verticalShrink);
+        const innerY = y + Math.round((h - innerH) / 2);
+
+        const imageAspect = img.width / img.height;
+        const slotAspect = w / innerH;
+        let drawW, drawH, dx, dy;
+        if (imageAspect > slotAspect) {
+          drawH = innerH;
+          drawW = drawH * imageAspect;
+          dx = x + (w - drawW) / 2;
+          dy = innerY;
+        } else {
+          drawW = w;
+          drawH = drawW / imageAspect;
+          dx = x;
+          dy = innerY + (innerH - drawH) / 2;
+        }
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, innerY, w, innerH);
+        ctx.clip();
+        ctx.drawImage(img, dx, dy, drawW, drawH);
+        ctx.restore();
+      });
+    };
+
+    const [overlayImg, images] = await Promise.all([overlayPromise, imagesPromise]);
+
+    if (overlayPosition === "below" && overlayImg) {
+      ctx.drawImage(overlayImg, 0, 0, width, height);
     }
 
-    const overlay = new Image();
-    overlay.src = `/frames/${frame}.png`;
-    overlay.onload = () => {
-      ctx.drawImage(overlay, 0, 0, width, height);
-      drawTitle();
-    };
-    overlay.onerror = () => {
-      drawTitle();
-    };
+    drawPhotos(images);
 
-    function drawTitle() {
-      const titleY = height - outerMargin - 80;
-      ctx.save();
-      ctx.font = "bold 84px 'Segoe UI', Arial, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.shadowColor = "rgba(0,0,0,0.25)";
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetY = 4;
-
-      const textGrad = ctx.createLinearGradient(width * 0.3, titleY - 40, width * 0.7, titleY + 40);
-      if (frame === "gold") {
-        textGrad.addColorStop(0, "#fff6bf");
-        textGrad.addColorStop(0.5, "#ffd700");
-        textGrad.addColorStop(1, "#b8860b");
-      } else if (frame === "wood") {
-        textGrad.addColorStop(0, "#f7e1c6");
-        textGrad.addColorStop(1, "#8b5a2b");
-      } else {
-        textGrad.addColorStop(0, "#333");
-        textGrad.addColorStop(1, "#666");
-      }
-      ctx.fillStyle = textGrad;
-      ctx.fillText("Dear Memory", width / 2, titleY);
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.strokeText("Dear Memory", width / 2, titleY);
-      ctx.restore();
+    if (overlayPosition === "above" && overlayImg) {
+      ctx.drawImage(overlayImg, 0, 0, width, height);
     }
   };
 
   const downloadImage = () => {
     if (typeof document === "undefined") return;
     const link = document.createElement("a");
-    link.download = "framed-photo.png";
+    link.download = "dear-memory-strip.png";
     link.href = canvasRef.current.toDataURL("image/png");
     link.click();
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Choose Your Frame</h1>
+      <h1>Select Your Frame</h1>
 
-      <div className="frame-options">
-        <button onClick={() => setFrame("polaroid")} className={frame === "polaroid" ? "active" : ""}>
-          Polaroid
-        </button>
-        <button onClick={() => setFrame("wood")} className={frame === "wood" ? "active" : ""}>
-          Wood
-        </button>
-        <button onClick={() => setFrame("gold")} className={frame === "gold" ? "active" : ""}>
-          Gold
-        </button>
-      </div>
+      {availableFrames.length > 0 && (
+        <div className="frame-list">
+          {availableFrames.map((f, idx) => (
+            <button
+              key={f.name}
+              className={`frame-thumb ${frameName === f.name ? "active" : ""}`}
+              onClick={() => setFrameName(f.name)}
+              title={`Frame ${idx + 1}`}
+            >
+              <span className="name">{`Frame ${idx + 1}`}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      <canvas ref={canvasRef} style={{ width: "320px", height: "960px", border: "10px solid #333", margin: "20px 0" }} />
+      <canvas
+        ref={canvasRef}
+        style={{ width: "320px", height: "960px", border: "10px solid #333", margin: "20px 0" }}
+      />
 
       <button className="download-btn" onClick={downloadImage}>
         Download
       </button>
 
       <style jsx>{`
-        .frame-options {
+        .frame-controls {
           display: flex;
-          gap: 10px;
-          margin-bottom: 20px;
+          gap: 12px;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-bottom: 12px;
         }
-        button {
-          padding: 8px 15px;
+        .frame-controls input {
+          margin-left: 8px;
+          padding: 6px 10px;
           border: 1px solid #ccc;
-          background: white;
-          cursor: pointer;
-          border-radius: 5px;
+          border-radius: 6px;
         }
-        button.active {
+        .hint {
+          color: #666;
+          font-size: 14px;
+        }
+        .frame-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 12px;
+          margin: 12px 0 16px;
+        }
+        .frame-thumb {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 14px 10px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          background: #fff;
+          cursor: pointer;
+        }
+        .frame-thumb.active {
           border-color: #0070f3;
-          background: #e6f0ff;
+          box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+        }
+        .frame-thumb .name {
+          font-size: 14px;
+          color: #333;
         }
         .download-btn {
           background: #0070f3;
