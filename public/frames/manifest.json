@@ -1,7 +1,13 @@
 [
   {
-    "name": "frame1",
-    "backgroundColor": "#faf5e6",
+    "name": "purpleTreat",
+    "backgroundColor": "#edcaf6",
+    "overlayPosition": "above",
+    "dateColor": "white"
+  },
+  {
+    "name": "mail",
+    "backgroundColor": "#FFFFFF",
     "overlayPosition": "below",
     "dateColor": "black"
   }

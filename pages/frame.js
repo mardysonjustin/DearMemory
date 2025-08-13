@@ -145,9 +145,9 @@ export default function FramePage() {
       const yyyy = now.getFullYear();
       const dateText = `${dd}-${mm}-${yyyy}`;
 
-      const margin = 36;
+      const margin = 20;
       ctx.save();
-      ctx.font = "600 35px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "600 30px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "right";
       ctx.textBaseline = "bottom";
       ctx.fillStyle = dateColor;
