@@ -39,6 +39,18 @@ export default function FramePage() {
     }
   }, [photos, frameName]);
 
+  const prettifyName = (raw) => {
+    if (!raw || typeof raw !== "string") return "";
+    const spaced = raw
+      .replace(/[-_]+/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2");
+    return spaced
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  };
+
   const drawFrame = async () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -186,14 +198,14 @@ export default function FramePage() {
 
       {availableFrames.length > 0 && (
         <div className="frame-list">
-          {availableFrames.map((f, idx) => (
+          {availableFrames.map((f) => (
             <button
               key={f.name}
               className={`frame-thumb ${frameName === f.name ? "active" : ""}`}
               onClick={() => setFrameName(f.name)}
-              title={`Frame ${idx + 1}`}
+              title={prettifyName(f.name)}
             >
-              <span className="name">{`Frame ${idx + 1}`}</span>
+              <span className="name">{prettifyName(f.name)}</span>
             </button>
           ))}
         </div>
@@ -227,28 +239,32 @@ export default function FramePage() {
           font-size: 14px;
         }
         .frame-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 12px;
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
           margin: 12px 0 16px;
+          overflow-x: auto;
+          padding-bottom: 4px;
         }
         .frame-thumb {
           display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 6px;
-          padding: 14px 10px;
+          justify-content: center;
+          padding: 6px 10px;
           border: 1px solid #ddd;
-          border-radius: 8px;
+          border-radius: 9999px;
           background: #fff;
           cursor: pointer;
+          white-space: nowrap;
+          font-size: 12px;
+          line-height: 1;
         }
         .frame-thumb.active {
           border-color: #0070f3;
           box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
         }
         .frame-thumb .name {
-          font-size: 14px;
+          font-size: 12px;
           color: #333;
         }
         .download-btn {
