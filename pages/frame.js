@@ -172,7 +172,16 @@ export default function FramePage() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+      }}
+    >
       <h1>Select Your Frame</h1>
 
       {availableFrames.length > 0 && (
