@@ -37,16 +37,23 @@ export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
     ctx.drawImage(videoRef.current, 0, 0);
-    const photoData = canvasRef.current.toDataURL("image/png");
-    setPhotos((prev) => {
-      const updated = [...prev, photoData];
-      if (updated.length === maxPhotos) {
-        setTakingPhotos(false);
-        if (onFinish) onFinish(updated);
-      }
-      return updated;
-    });
-    triggerFlash();
+
+    // convert to blob -> object url stead of base64
+    canvasRef.current.toBlob((blob) => {
+      if (!blob) return;
+      const photoUrl = URL.createObjectURL(blob);
+
+      setPhotos((prev) => {
+        const updated = [...prev, photoUrl];
+        if (updated.length === maxPhotos) {
+          setTakingPhotos(false);
+          if (onFinish) onFinish(updated);
+        }
+        return updated;
+      });
+
+      triggerFlash();
+    }, "image/png");
   };
 
   const triggerFlash = () => {
@@ -83,6 +90,8 @@ export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
   };
 
   const clearPhotos = () => {
+    // revoke URLs to free memory
+    photos.forEach((url) => URL.revokeObjectURL(url));
     setPhotos([]);
   };
 
