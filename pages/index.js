@@ -26,9 +26,10 @@ export default function Home() {
     },
   });
 
-  const [showPopup, setShowPopup] = useState(true);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
+    setShowPopup(true);
     if (photos.length === 8) {
       router.push("/select");
     }
