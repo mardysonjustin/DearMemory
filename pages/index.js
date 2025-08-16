@@ -17,11 +17,14 @@ export default function Home() {
     countdown,
     flash,
     clearPhotos,
-  } = usePhotobooth({ maxPhotos: 8, onFinish: (finalPhotos) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("photoboothPhotos", JSON.stringify(finalPhotos));
-    }
-  }});
+  } = usePhotobooth({
+    maxPhotos: 8,
+    onFinish: (finalPhotos) => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("photoboothPhotos", JSON.stringify(finalPhotos));
+      }
+    },
+  });
 
   useEffect(() => {
     if (photos.length === 8) {
@@ -30,7 +33,7 @@ export default function Home() {
   }, [photos, router]);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="page-container">
       <h1 style={{ textAlign: "center" }}>Dear Memory</h1>
       <StatusIndicator isReady={isCameraReady} />
 
@@ -49,6 +52,14 @@ export default function Home() {
       <Gallery photos={photos} />
 
       <style jsx>{`
+        .page-container {
+          min-height: 100vh;
+          background-image: url("backgrounds/dmbg.jpg");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          padding: 20px;
+        }
         .main-layout {
           display: flex;
           justify-content: center;
