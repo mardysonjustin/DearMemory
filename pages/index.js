@@ -42,7 +42,7 @@ export default function Home() {
         <div className="popup-overlay">
           <div className="popup">
             <h1>WELCOME TO DEAR MEMORY!</h1>
-            <p><em>"Capture moments, treasure memories."</em></p>
+            <p><em>&quot;Capture moments, treasure memories.&quot;</em></p>
             <ul>
               <li>📸 Click <strong>Start</strong> to begin — the system will automatically take 8 photos.</li>
               <li>✨ Choose your favorite 4 out of the 8 photos.</li>

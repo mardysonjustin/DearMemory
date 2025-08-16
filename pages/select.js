@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function SelectPhotos() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function SelectPhotos() {
             className={`photo-item ${selected.includes(photo) ? "selected" : ""}`}
             onClick={() => toggleSelect(photo)}
           >
-            <img src={photo} alt={`Photo ${idx + 1}`} />
+            <Image src={photo} alt="Selected Photo" width={200} height={200} />
             {selected.includes(photo) && <div className="checkmark">✔</div>}
           </div>
         ))}
