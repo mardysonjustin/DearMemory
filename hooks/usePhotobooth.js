@@ -29,20 +29,21 @@ export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
     initCamera();
   }, []);
 
-  const takePhoto = () => {
-    if (!canvasRef.current && typeof document !== "undefined") {
+  const takePhoto = () => {  // made it more stricter for vercel deployment
+    if (typeof window === "undefined") return; // prevent SSR crash
+    if (!canvasRef.current) {
       canvasRef.current = document.createElement("canvas");
     }
+  
     const ctx = canvasRef.current.getContext("2d");
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
     ctx.drawImage(videoRef.current, 0, 0);
-
-    // convert to blob -> object url stead of base64
+  
     canvasRef.current.toBlob((blob) => {
-      if (!blob) return;
+      if (!blob) return; // safety check
       const photoUrl = URL.createObjectURL(blob);
-
+  
       setPhotos((prev) => {
         const updated = [...prev, photoUrl];
         if (updated.length === maxPhotos) {
@@ -51,10 +52,11 @@ export default function usePhotobooth({ maxPhotos = 4, onFinish } = {}) {
         }
         return updated;
       });
-
+  
       triggerFlash();
     }, "image/png");
   };
+  
 
   const triggerFlash = () => {
     setFlash(true);
