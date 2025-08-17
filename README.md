@@ -22,6 +22,6 @@ _A simple photobooth web app for capturing and treasuring your special moments._
 - [Vercel](https://vercel.com/) – for deployment  
 
 ## Live Demo  
-Try it here [Dear Memory on Vercel](dear-memory.vercel.app
-)
+Try it here [Visit Dear Memory](https://dear-memory.vercel.app)
+
 
