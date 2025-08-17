@@ -28,8 +28,12 @@ export default function Home() {
 
   const [showPopup, setShowPopup] = useState(false);
 
+  // infinite popup fix
   useEffect(() => {
     setShowPopup(true);
+  }, []);
+
+  useEffect(() => {
     if (photos.length === 8) {
       router.push("/select");
     }
