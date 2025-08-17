@@ -10,5 +10,17 @@
     "backgroundColor": "#FFFFFF",
     "overlayPosition": "below",
     "dateColor": "black"
+  },
+  {
+    "name": "Insanity",
+    "backgroundColor": "#000000",
+    "overlayPosition": "above",
+    "dateColor": "white"
+  },
+  {
+    "name": "Y2K",
+    "backgroundColor": "#FFFFFF",
+    "overlayPosition": "above",
+    "dateColor": "black"
   }
 ]
