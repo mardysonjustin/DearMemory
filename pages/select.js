@@ -53,9 +53,16 @@ export default function SelectPhotos() {
 
       <style jsx>{`
         .select-page {
+          min-height: 100vh;
           padding: 20px;
           text-align: center;
+          background-image: url("/backgrounds/dmbg.jpg");
+          background-size: cover;  
+          background-position: center;
+          background-repeat: no-repeat; 
+          position: relative;    
         }
+
         .title {
           font-size: 28px;
           margin-bottom: 5px;

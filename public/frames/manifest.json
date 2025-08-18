@@ -28,5 +28,11 @@
     "backgroundColor": "#f84ca2",
     "overlayPosition": "above",
     "dateColor": "black"
+  },
+  {
+    "name": "Love",
+    "backgroundColor": "#FFFFFF",
+    "overlayPosition": "below",
+    "dateColor": "#ff7fa5"
   }
 ]

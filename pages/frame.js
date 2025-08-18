@@ -175,7 +175,7 @@ export default function FramePage() {
 
       const margin = 20;
       ctx.save();
-      ctx.font = "600 30px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "600 25px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "right";
       ctx.textBaseline = "bottom";
       ctx.fillStyle = dateColor;
