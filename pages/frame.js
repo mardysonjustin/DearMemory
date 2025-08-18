@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 export default function FramePage() {
+  // states
   const [photos, setPhotos] = useState([]);
   const [frameName, setFrameName] = useState("");
   const [availableFrames, setAvailableFrames] = useState([]);
   const canvasRef = useRef(null);
 
+  // load selected photos
   useEffect(() => {
     const selected = JSON.parse(localStorage.getItem("selectedPhotos")) || [];
     setPhotos(selected.slice(0, 4));
   }, []);
 
+  // load available frames from manifest
   useEffect(() => {
     // load available frame names from manifest
     fetch("/frames/manifest.json")
@@ -33,12 +37,14 @@ export default function FramePage() {
       .catch(() => {});
   }, []);
 
+  // draw frame when photos and frameName ready
   useEffect(() => {
     if (photos.length === 4) {
       drawFrame();
     }
   }, [photos, frameName]);
 
+  // prettify frame name
   const prettifyName = (raw) => {
     if (!raw || typeof raw !== "string") return "";
     const spaced = raw
@@ -51,6 +57,7 @@ export default function FramePage() {
       .join(" ");
   };
 
+  // draw canvas
   const drawFrame = async () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -60,17 +67,19 @@ export default function FramePage() {
     canvas.width = width;
     canvas.height = height;
 
-    // Resolve selected frame config
+    // resolve selected frame config
     const selectedFrame = availableFrames.find((f) => f.name === frameName) || null;
     const backgroundColor = selectedFrame?.backgroundColor || "#ffffff";
     const overlayPosition = selectedFrame?.overlayPosition || "above"; // 'above' | 'below'
     const dateColorRaw = (selectedFrame?.dateColor || "black").toLowerCase();
     const dateColor = dateColorRaw === "white" ? "white" : "black"; // clamp to black/white only
 
+    // clear and paint background
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
+    // photo slots
     const slots = [
       { x: 80, y: 80, w: 840, h: 632 },
       { x: 80, y: 743, w: 840, h: 632 },
@@ -78,6 +87,7 @@ export default function FramePage() {
       { x: 80, y: 2068, w: 840, h: 632 },
     ];
 
+    // helper: load photo
     const loadImage = (src) =>
       new Promise((resolve, reject) => {
         const img = new Image();
@@ -87,6 +97,7 @@ export default function FramePage() {
         img.src = src;
       });
 
+    // helper: load overlay
     const loadOverlay = () =>
       new Promise((resolve) => {
         if (!frameName || frameName.trim() === "") return resolve(null);
@@ -103,9 +114,10 @@ export default function FramePage() {
       return [];
     });
 
-    // Slight vertical shrink inside each slot (e.g., 5%)
+    // slight vertical shrink inside each slot (e.g., 5%)
     const verticalShrink = 0.95;
 
+    // draw photos
     const drawPhotos = (images) => {
       images.forEach((img, i) => {
         if (!img) return;
@@ -137,14 +149,18 @@ export default function FramePage() {
       });
     };
 
+    // wait for overlay + images
     const [overlayImg, images] = await Promise.all([overlayPromise, imagesPromise]);
 
+    // draw overlay below if configured
     if (overlayPosition === "below" && overlayImg) {
       ctx.drawImage(overlayImg, 0, 0, width, height);
     }
 
+    // draw photos
     drawPhotos(images);
 
+    // draw overlay above if configured
     if (overlayPosition === "above" && overlayImg) {
       ctx.drawImage(overlayImg, 0, 0, width, height);
     }
@@ -175,6 +191,7 @@ export default function FramePage() {
     drawDate();
   };
 
+  // download the strip
   const downloadImage = () => {
     if (typeof document === "undefined") return;
     const link = document.createElement("a");
@@ -192,8 +209,18 @@ export default function FramePage() {
         alignItems: "center",
         justifyContent: "center",
         padding: "20px",
+        backgroundImage: 'url("/backgrounds/dmbg.jpg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        position: "relative",
       }}
     >
+      {/* added home button */}
+      <Link href="/" passHref legacyBehavior>
+        <a className="back-btn">← Home</a>
+      </Link>
+
       <h1>Select Your Frame</h1>
 
       {availableFrames.length > 0 && (
@@ -220,7 +247,19 @@ export default function FramePage() {
         Download
       </button>
 
+      {/* scoped styles */}
       <style jsx>{`
+        .back-btn {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.6);
+          color: white;
+          padding: 8px 14px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 14px;
+        }
         .frame-controls {
           display: flex;
           gap: 12px;
