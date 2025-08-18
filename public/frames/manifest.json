@@ -22,5 +22,11 @@
     "backgroundColor": "#FFFFFF",
     "overlayPosition": "above",
     "dateColor": "black"
+  },
+  {
+    "name": "retro",
+    "backgroundColor": "#f84ca2",
+    "overlayPosition": "above",
+    "dateColor": "black"
   }
 ]
