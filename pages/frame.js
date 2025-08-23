@@ -57,6 +57,18 @@ export default function FramePage() {
       .join(" ");
   };
 
+  // dynamic button color 
+  const getContrastColor = (bgColor) => {
+    if (!bgColor) return "#000";
+    const hex = bgColor.replace("#", "");
+    if (hex.length !== 6) return "#000";
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? "#000" : "#fff";
+  };
+
   // draw canvas
   const drawFrame = async () => {
     const canvas = canvasRef.current;
@@ -114,7 +126,6 @@ export default function FramePage() {
       return [];
     });
 
-    // slight vertical shrink inside each slot (e.g., 5%)
     const verticalShrink = 0.95;
 
     // draw photos
@@ -225,16 +236,24 @@ export default function FramePage() {
 
       {availableFrames.length > 0 && (
         <div className="frame-list">
-          {availableFrames.map((f) => (
-            <button
-              key={f.name}
-              className={`frame-thumb ${frameName === f.name ? "active" : ""}`}
-              onClick={() => setFrameName(f.name)}
-              title={prettifyName(f.name)}
-            >
-              <span className="name">{prettifyName(f.name)}</span>
-            </button>
-          ))}
+          {availableFrames.map((f) => {
+            const textColor = getContrastColor(f.backgroundColor || "#fff");
+            return (
+              <button
+                key={f.name}
+                className={`frame-thumb ${frameName === f.name ? "active" : ""}`}
+                onClick={() => setFrameName(f.name)}
+                title={prettifyName(f.name)}
+                style={{
+                  backgroundColor: f.backgroundColor || "#fff",
+                  color: textColor,
+                  borderColor: frameName === f.name ? "#0070f3" : "#ddd",
+                }}
+              >
+                <span className="name">{prettifyName(f.name)}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -247,7 +266,6 @@ export default function FramePage() {
         Download
       </button>
 
-      {/* scoped styles */}
       <style jsx>{`
         .back-btn {
           position: absolute;
@@ -258,23 +276,6 @@ export default function FramePage() {
           padding: 8px 14px;
           border-radius: 6px;
           text-decoration: none;
-          font-size: 14px;
-        }
-        .frame-controls {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-          flex-wrap: wrap;
-          margin-bottom: 12px;
-        }
-        .frame-controls input {
-          margin-left: 8px;
-          padding: 6px 10px;
-          border: 1px solid #ccc;
-          border-radius: 6px;
-        }
-        .hint {
-          color: #666;
           font-size: 14px;
         }
         .frame-list {
@@ -292,22 +293,19 @@ export default function FramePage() {
           padding: 6px 10px;
           border: 1px solid #ddd;
           border-radius: 9999px;
-          background: #fff;
           cursor: pointer;
           white-space: nowrap;
           font-size: 12px;
           line-height: 1;
         }
         .frame-thumb.active {
-          border-color: #0070f3;
           box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
         }
         .frame-thumb .name {
           font-size: 12px;
-          color: #333;
         }
         .download-btn {
-          background: #0070f3;
+          background: #00bf63; 
           color: white;
           padding: 10px 20px;
           font-size: 16px;

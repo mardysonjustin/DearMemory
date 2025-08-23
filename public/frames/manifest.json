@@ -31,13 +31,13 @@
   },
   {
     "name": "Love",
-    "backgroundColor": "#FFFFFF",
+    "backgroundColor": "#ff7fa5",
     "overlayPosition": "below",
     "dateColor": "#ff7fa5"
   },
   {
-    "name": "Love",
-    "backgroundColor": "#FFFFFF",
+    "name": "Doodle",
+    "backgroundColor": "#c1ff72",
     "overlayPosition": "below",
     "dateColor": "#FFFFFF"
   }

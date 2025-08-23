@@ -69,7 +69,7 @@ export default function SelectPhotos() {
         }
         .subtitle {
           font-size: 16px;
-          color: #555;
+          color:rgb(204, 191, 191);
           margin-bottom: 20px;
         }
         .photo-grid {
